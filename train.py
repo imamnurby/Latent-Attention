@@ -1,6 +1,6 @@
 import argparse, bisect
 import collections
-import cPickle as pickle
+import pickle
 import hashlib, imp
 import json, random
 import os, shutil, sys
@@ -9,7 +9,8 @@ import time
 
 import numpy as np
 import tensorflow as tf
-import tf_utils
+import utils
+import model
 import _jsonnet
 
 from model import *
@@ -49,7 +50,7 @@ class IftttTrain(tf_utils.TFMainLoop):
     buckets = tf_utils.create_buckets(
         [len(item['ids']) for item in self.data['train']],
         self.optim_config['batch_size'] * 5000)
-    print 'Buckets:', buckets
+    print('Buckets:', buckets)
 
     self.bucketed_train = [[] for i in range(len(buckets))]
     for item in self.data['train']:
@@ -76,7 +77,7 @@ class IftttTrain(tf_utils.TFMainLoop):
                              self.optim_config['batch_size'])
       self.num_steps_per_eval = int(num_steps_per_epoch *
                                     self.eval_config['freq'])
-      print 'Testing every {} steps.'.format(self.num_steps_per_eval)
+      print('Testing every {} steps.'.format(self.num_steps_per_eval))
     elif self.eval_config['unit'] == 'steps':
       self.num_steps_per_eval = self.eval_config['freq']
 
@@ -202,12 +203,12 @@ class IftttTrain(tf_utils.TFMainLoop):
 
     if np.all(candidate_best_acc < self.best_accuracy):
       self.num_tests_below_best_accuracy += 1
-      print 'Failed to exceed best accuracy: {}'.format(
-          self.num_tests_below_best_accuracy)
+      print('Failed to exceed best accuracy: {}'.format(
+          self.num_tests_below_best_accuracy))
     else:
       improved_categories = candidate_best_acc >= self.best_accuracy
       if improved_categories[1]:
-	probs_by_section = collections.defaultdict(
+        probs_by_section = collections.defaultdict(
             lambda: [[] for i in xrange(4)])
         labels_by_section = collections.defaultdict(
             lambda: [[] for i in xrange(4)])
@@ -249,17 +250,17 @@ class IftttTrain(tf_utils.TFMainLoop):
         self.num_tests_below_best_accuracy = 0
       else:
         self.num_tests_below_best_accuracy += 1
-      print 'Num tests below best accuracy: {}'.format(
-          self.num_tests_below_best_accuracy)
+      print('Num tests below best accuracy: {}'.format(
+          self.num_tests_below_best_accuracy))
 
-    print 'Keys: {}'.format(self.label_type_names)
-    print 'This time: {}'.format(candidate_best_acc)
-    print 'Current best: {}'.format(self.best_accuracy)
-    print 'Best iters: {}'.format(self.best_iters)
+    print('Keys: {}'.format(self.label_type_names))
+    print('This time: {}'.format(candidate_best_acc))
+    print('Current best: {}'.format(self.best_accuracy))
+    print('Best iters: {}'.format(self.best_iters))
     for section in num_correct:
-      print '{} best: {}'.format(
+      print('{} best: {}'.format(
           section, np.array([self.all_accuracies_by_section[section][
-              self.best_iters[i]][i] for i in xrange(len(self.best_iters))]))
+              self.best_iters[i]][i] for i in xrange(len(self.best_iters))])))
 
     # Write stats
     stats = {
@@ -333,7 +334,7 @@ def main():
 
   if args.logdir is None:
     args.logdir = tempfile.mkdtemp(prefix='ifttt_')
-    print args.logdir
+    print(args.logdir)
   if args.clear and not (args.number_logdir or args.test_logdir):
     try:
       shutil.rmtree(args.logdir)
@@ -350,7 +351,7 @@ def main():
       m = ifttt_train.create_model(is_training=False)
 
     for best_iter, name in zip(stats['best_iters'], stats['keys']):
-      print name
+      print(name)
       saver = tf.train.Saver(max_to_keep=0)
       with tf.Session() as sess:
         saver.restore(sess,
@@ -392,7 +393,7 @@ def main():
 
   if args.config:
     pretty_config_str = _jsonnet.evaluate_file(args.config)
-    print pretty_config_str
+    print(pretty_config_str)
     tf_utils.mkdir_p(args.logdir)
     if args.number_logdir:
       sub_logdirs = os.listdir(args.logdir)
@@ -412,12 +413,12 @@ def main():
     except KeyboardInterrupt:
       pass
 
-    print 'Config:'
-    print pretty_config_str
-    print 'Label names:', ifttt_train.label_type_names
-    print 'Best accuracies:', ifttt_train.best_accuracy
-    print 'Best iters:', ifttt_train.best_iters
-    print 'Logdir:', args.logdir
+    print('Config:')
+    print(pretty_config_str)
+    print('Label names:', ifttt_train.label_type_names)
+    print('Best accuracies:', ifttt_train.best_accuracy)
+    print('Best iters:', ifttt_train.best_iters)
+    print('Logdir:', args.logdir)
 
 if __name__ == '__main__':
   main()

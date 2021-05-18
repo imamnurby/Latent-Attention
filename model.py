@@ -1,6 +1,6 @@
 import argparse, bisect
 import collections
-import cPickle as pickle
+import pickle
 import hashlib, imp
 import json, random
 import os, shutil, sys
